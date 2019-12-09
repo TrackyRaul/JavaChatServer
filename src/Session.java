@@ -92,8 +92,18 @@ public class Session implements Runnable {
                                 String[] paramLs = param.split(",");
                                 if (paramLs.length == 2) {
                                     if (paramLs[0].trim().equals("user")) {
-                                        this.dest = paramLs[1].trim();
-                                        System.out.println(this.dest);
+                                        boolean found = false;
+                                        for (Session s : this.otherSessions) {
+                                            if (s.user.getUsername().equals(paramLs[1].trim())) {
+                                                found = true;
+                                                this.dest = paramLs[1].trim();
+
+                                                break;
+                                            }
+                                        }
+                                        if (!found) {
+                                            selfOut.println("Server:error:User not found!");
+                                        }
                                     }
                                 } else {
                                     selfOut.println("Server:error:Command dest not used correctly!");
