@@ -7,6 +7,7 @@ public class Session implements Runnable {
     private ArrayList<Session> otherSessions;
     private User user;
     private String dest;
+    private String destType = "single";
 
     public Session(Socket currentSocket, ArrayList<Session> otherSessions) {
         this.currentSocket = currentSocket;
@@ -82,6 +83,7 @@ public class Session implements Runnable {
                                 break;
                             } else if (commandType.equals("/dest")) {
                                 // Command: /dest type,name
+                                // Or Command: /dest broadcast
                                 // Change destination
                                 if (inCommand.length() <= 6){
                                     selfOut.println("Server:error:Command dest not used correctly!");
@@ -97,6 +99,7 @@ public class Session implements Runnable {
                                             if (s.user.getUsername().equals(paramLs[1].trim())) {
                                                 found = true;
                                                 this.dest = paramLs[1].trim();
+                                                this.destType = "single";
 
                                                 break;
                                             }
@@ -104,6 +107,11 @@ public class Session implements Runnable {
                                         if (!found) {
                                             selfOut.println("Server:error:User not found!");
                                         }
+                                    }
+                                } else if (paramLs.length == 1) {
+                                    if (paramLs[0].trim().equals("broadcast")) {
+                                        this.dest = null;
+                                        this.destType = "broadcast";
                                     }
                                 } else {
                                     selfOut.println("Server:error:Command dest not used correctly!");
@@ -120,26 +128,38 @@ public class Session implements Runnable {
                     }
                     else if (type.equals("Message")) {
                         // Send messages
-                        if (this.dest != null) {
-                            if (this.dest.trim().equals("") ) {
+                        if (this.dest != null && this.destType.equals("single")) {
+                            if (this.dest.trim().equals("") && this.destType.equals("single")) {
                                 selfOut.println("Server:error:Message destination not set!");
                                 continue;
                             }
-                        } else {
+                        } else if (this.dest == null && this.destType.equals("single")) {
                             selfOut.println("Server:error:Message destination not set!");
                             continue;
                         }
                         String inMessage = inStr.substring(8).trim();
                         // For each session
                         for (Session s : this.otherSessions) {
-                            // Get username anche check if it matches with the dest string
-                            if (s.user.getUsername().equals(this.dest)) {
-                                stringaOut = new OutputStreamWriter(s.currentSocket.getOutputStream());
-                                buffer = new BufferedWriter(stringaOut);
-                                out = new PrintWriter(buffer, true);
+                            // Check if broadcast or not
+                            if (this.dest == null && this.destType.equals("broadcast")){
+                                if (!s.equals(this)) {
+                                    stringaOut = new OutputStreamWriter(s.currentSocket.getOutputStream());
+                                    buffer = new BufferedWriter(stringaOut);
+                                    out = new PrintWriter(buffer, true);
 
-                                // Message structure for users: "User:{Name}:{Message}"
-                                out.println("User:" + this.user.getUsername() + ":" + inMessage);
+                                    // Message structure for users: "User:{Name}:{Message}"
+                                    out.println("User:" + this.user.getUsername() + "(broadcast):" + inMessage);
+                                }
+                            } else {
+                                // Get username and check if it matches with the dest string
+                                if (s.user.getUsername().equals(this.dest)) {
+                                    stringaOut = new OutputStreamWriter(s.currentSocket.getOutputStream());
+                                    buffer = new BufferedWriter(stringaOut);
+                                    out = new PrintWriter(buffer, true);
+
+                                    // Message structure for users: "User:{Name}:{Message}"
+                                    out.println("User:" + this.user.getUsername() + ":" + inMessage);
+                                }
                             }
                         }
                     }
