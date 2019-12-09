@@ -92,6 +92,10 @@ public class Session implements Runnable {
                         String inCommand = inStr.substring(8).trim();
                         //System.out.println("Command message " + inCommand);
 
+                        if (this.user.getUsername().equals("Guest")) {
+                            selfOut.println("Server:error:User not authenticated!");
+                            continue;
+                        }
                         if (inCommand.split(" ").length >= 1) {
                             String commandType = inCommand.split(" ")[0];
                             if (commandType.equals("/quit")) {
@@ -144,6 +148,10 @@ public class Session implements Runnable {
                     }
                     else if (type.equals("Message")) {
                         // Send messages
+                        if (this.user.getUsername().equals("Guest")) {
+                            selfOut.println("Server:error:User not authenticated!");
+                            continue;
+                        }
                         if (this.dest != null && this.destType.equals("single")) {
                             if (this.dest.trim().equals("") && this.destType.equals("single")) {
                                 selfOut.println("Server:error:Message destination not set!");
