@@ -31,73 +31,77 @@ public class Session implements Runnable {
                 String inStr = inBuffer.readLine();
                 System.out.println(inStr);
 
-                // Split to check message type
-                String[] typeInSplitStr = inStr.split(":");
-                String type = "";
+                if (inStr.contains(":")){
+                    // Split to check message type
+                    String[] typeInSplitStr = inStr.split(":");
+                    String type = "";
 
-                // Define messge type
-                if (typeInSplitStr.length >= 1){
-                    type = typeInSplitStr[0];
-                }
-                else {
-                    // Skip if type not defined
-                    continue;
-                }
-
-                // Head informations
-                if (type.equals("Head")) {
-                    // Description structure
-                    // username, password(not implemented)
-                    System.out.println("Head message");
-                    String[] inHeadDescription = inStr.substring(5).split(",");
-
-                    if (inHeadDescription.length >= 0) {
-                        this.user.setUsername(inHeadDescription[0].trim());
-                        System.out.println(this.user.getUsername());
+                    // Define messge type
+                    if (typeInSplitStr.length >= 2){
+                        type = typeInSplitStr[0];
                     }
-                }
-                else if (type.equals("Command")) {
-                    // Commands to be executed by the server
+                    else {
+                        // Skip if type not defined
+                        continue;
+                    }
 
-                    String inCommand = inStr.substring(8).trim();
-                    //System.out.println("Command message " + inCommand);
-                    String commandType = inCommand.split(" ")[0];
-                    if (commandType.equals("/quit")) {
-                        closeMyself();
+                    // Head informations
+                    if (type.equals("Head")) {
+                        // Description structure
+                        // username, password(not implemented)
+                        System.out.println("Head message");
+                        String[] inHeadDescription = inStr.substring(5).split(",");
 
-                        break;
-                    }else if (commandType.equals("/dest")){
-                        // Command: /dest type,name
-                        String param = inCommand.substring(6).trim();
+                        if (inHeadDescription.length >= 0) {
+                            this.user.setUsername(inHeadDescription[0].trim());
+                            System.out.println(this.user.getUsername());
+                        }
+                        else {
+                            continue;
+                        }
+                    }
+                    else if (type.equals("Command")) {
+                        // Commands to be executed by the server
+                        String inCommand = inStr.substring(8).trim();
+                        //System.out.println("Command message " + inCommand);
 
-                        String[] paramLs = param.split(",");
-                        if(paramLs.length == 2){
-                            if(paramLs[0].trim().equals("user")){
-                                this.dest = paramLs[1].trim();
-                                System.out.println(this.dest);
+                        if (inCommand.split(" ").length >= 1) {
+                            String commandType = inCommand.split(" ")[0];
+                            if (commandType.equals("/quit")) {
+                                closeMyself();
+                                break;
+                            }else if (commandType.equals("/dest")){
+                                // Command: /dest type,name
+                                String param = inCommand.substring(6).trim();
+
+                                String[] paramLs = param.split(",");
+                                if(paramLs.length == 2){
+                                    if(paramLs[0].trim().equals("user")){
+                                        this.dest = paramLs[1].trim();
+                                        System.out.println(this.dest);
+                                    }
+                                }else{
+                                    System.out.println("Error, command dest not used correctly");
+                                    continue;
+                                }
                             }
-                        }else{
-                            System.out.println("Error, command dest not used correctly");
                         }
+                        else if (type.equals("Message")) {
+                            // Send messages
 
-                    }
-
-                }
-                else if (type.equals("Message")) {
-                    // Send messages
-
-                    String inMessage = inStr.substring(8).trim();
-                    for (Session s: this.otherSessions){
-                        System.out.println(s.user.getUsername());
-                        if(s.user.getUsername().equals(this.dest)){
-                            stringaOut = new OutputStreamWriter(s.currentSocket.getOutputStream());
-                            buffer = new BufferedWriter(stringaOut);
-                            out = new PrintWriter(buffer, true);
-                            out.println(inMessage);
+                            String inMessage = inStr.substring(8).trim();
+                            for (Session s: this.otherSessions){
+                                System.out.println(s.user.getUsername());
+                                if(s.user.getUsername().equals(this.dest)){
+                                    stringaOut = new OutputStreamWriter(s.currentSocket.getOutputStream());
+                                    buffer = new BufferedWriter(stringaOut);
+                                    out = new PrintWriter(buffer, true);
+                                    // Message structure for users: "User:{Name}:{Message}"
+                                    out.println("User:" + s.user.getUsername() + ":" + inMessage);
+                                }
+                            }
                         }
-
                     }
-
                 }
             }
 
