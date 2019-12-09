@@ -129,7 +129,7 @@ public class Session implements Runnable {
                                 out = new PrintWriter(buffer, true);
 
                                 // Message structure for users: "User:{Name}:{Message}"
-                                out.println("User:" + s.user.getUsername() + ":" + inMessage);
+                                out.println("User:" + this.user.getUsername() + ":" + inMessage);
                             }
                         }
                     }
