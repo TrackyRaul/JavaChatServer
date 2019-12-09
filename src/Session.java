@@ -75,6 +75,7 @@ public class Session implements Runnable {
                             }
                             if (!taken) {
                                 this.user.setUsername(inHeadDescription[0].trim());
+                                selfOut.println("Head: OK");
                                 System.out.println(this.user.getUsername());
                             }
                             else {
@@ -92,12 +93,15 @@ public class Session implements Runnable {
                         String inCommand = inStr.substring(8).trim();
                         //System.out.println("Command message " + inCommand);
 
-                        if (this.user.getUsername().equals("Guest")) {
-                            selfOut.println("Server:error:User not authenticated!");
-                            continue;
-                        }
+
                         if (inCommand.split(" ").length >= 1) {
                             String commandType = inCommand.split(" ")[0];
+                            if (!commandType.equals("/quit")) {
+                                if (this.user.getUsername().equals("Guest")) {
+                                    selfOut.println("Server:error:User not authenticated!");
+                                    continue;
+                                }
+                            }
                             if (commandType.equals("/quit")) {
                                 closeMyself();
                                 break;
@@ -199,6 +203,7 @@ public class Session implements Runnable {
             this.currentSocket.close();
         } catch (IOException ex) {
             System.out.println(ex);
+            closeMyself();
         }
 
     }
@@ -210,5 +215,13 @@ public class Session implements Runnable {
                 System.out.println("Disconnected!");
             }
         }
+    }
+
+    public Socket getCurrentSocket() {
+        return currentSocket;
+    }
+
+    public User getUser() {
+        return user;
     }
 }
