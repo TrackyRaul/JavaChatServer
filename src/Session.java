@@ -63,8 +63,24 @@ public class Session implements Runnable {
                         String[] inHeadDescription = inStr.substring(5).split(",");
 
                         if (inHeadDescription.length >= 0) {
-                            this.user.setUsername(inHeadDescription[0].trim());
-                            System.out.println(this.user.getUsername());
+
+                            // Check if username already taken
+                            boolean taken = false;
+                            for (Session s : this.otherSessions) {
+                                if (s.user.getUsername().equals(inHeadDescription[0].trim())) {
+                                    selfOut.println("Server:error:Username already taken!");
+                                    taken = true;
+                                    break;
+                                }
+                            }
+                            if (!taken) {
+                                this.user.setUsername(inHeadDescription[0].trim());
+                                System.out.println(this.user.getUsername());
+                            }
+                            else {
+                                continue;
+                            }
+
                         }
                         else {
                             selfOut.println("Server:error:Sent head is not valid");
