@@ -72,6 +72,7 @@ public class Session implements Runnable {
                                 break;
                             }else if (commandType.equals("/dest")){
                                 // Command: /dest type,name
+                                // Change destination
                                 String param = inCommand.substring(6).trim();
 
                                 String[] paramLs = param.split(",");
@@ -88,14 +89,18 @@ public class Session implements Runnable {
                         }
                         else if (type.equals("Message")) {
                             // Send messages
-
+                            if (this.dest.equals("") || this.dest == null){
+                                continue;
+                            }
                             String inMessage = inStr.substring(8).trim();
+                            // For each session
                             for (Session s: this.otherSessions){
-                                System.out.println(s.user.getUsername());
+                                // Get username anche check if it matches with the dest string
                                 if(s.user.getUsername().equals(this.dest)){
                                     stringaOut = new OutputStreamWriter(s.currentSocket.getOutputStream());
                                     buffer = new BufferedWriter(stringaOut);
                                     out = new PrintWriter(buffer, true);
+
                                     // Message structure for users: "User:{Name}:{Message}"
                                     out.println("User:" + s.user.getUsername() + ":" + inMessage);
                                 }
