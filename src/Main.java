@@ -6,7 +6,7 @@ import java.util.ArrayList;
 public class Main {
 
     public static void main(String[] args) throws IOException {
-        final int port = 8888;
+        final int port = 3333;
         ServerSocket serverSocket = new ServerSocket(port);
         System.out.println("Server started on port.");
         ArrayList<Session> sessionArrayList = new ArrayList<Session>();
@@ -16,6 +16,7 @@ public class Main {
             System.out.println("New client connected to the server. \n" + socket.toString());
 
             Session newSession = new Session(socket, sessionArrayList);
+            sessionArrayList.add(newSession);
             Thread t1 = new Thread(newSession);
             t1.start();
 

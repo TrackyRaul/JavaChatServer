@@ -36,9 +36,10 @@ public class Session implements Runnable {
                 String type = "";
 
                 // Define messge type
-                if (typeInSplitStr.length >= 1) {
+                if (typeInSplitStr.length >= 1){
                     type = typeInSplitStr[0];
-                } else {
+                }
+                else {
                     // Skip if type not defined
                     continue;
                 }
@@ -47,23 +48,61 @@ public class Session implements Runnable {
                 if (type.equals("Head")) {
                     // Description structure
                     // username, password(not implemented)
+                    System.out.println("Head message");
                     String[] inHeadDescription = inStr.substring(5).split(",");
 
                     if (inHeadDescription.length >= 0) {
                         this.user.setUsername(inHeadDescription[0].trim());
                         System.out.println(this.user.getUsername());
                     }
-                } else if (type.equals("Command")) {
+                }
+                else if (type.equals("Command")) {
                     // Commands to be executed by the server
+
                     String inCommand = inStr.substring(8).trim();
-                    if (inCommand.equals("quit")) {
-                        this.closeMyself();
+                    //System.out.println("Command message " + inCommand);
+                    String commandType = inCommand.split(" ")[0];
+                    if (commandType.equals("/quit")) {
+                        stringaOut = new OutputStreamWriter(this.currentSocket.getOutputStream());
+                        buffer = new BufferedWriter(stringaOut);
+                        out = new PrintWriter(buffer, true);
+                        out.write("Command: /quit");
+                        closeMyself();
+
                         break;
+                    }else if (commandType.equals("/dest")){
+                        // Command: /dest type,name
+                        String param = inCommand.substring(6).trim();
+
+                        String[] paramLs = param.split(",");
+                        if(paramLs.length == 2){
+                            if(paramLs[0].trim().equals("user")){
+                                this.dest = paramLs[1].trim();
+                                System.out.println(this.dest);
+                            }
+                        }else{
+                            System.out.println("Error, command dest not used correctly");
+                        }
+
                     }
-                } else if (type.equals("Message")) {
+
+                }
+                else if (type.equals("Message")) {
                     // Send messages
+
                     String inMessage = inStr.substring(8).trim();
-                    System.out.println(inMessage);
+                    System.out.println("Arrivato al ciclo!");
+                    for (Session s: this.otherSessions){
+                        System.out.println(s.user.getUsername());
+                        if(s.user.getUsername().equals(this.dest)){
+                            stringaOut = new OutputStreamWriter(s.currentSocket.getOutputStream());
+                            buffer = new BufferedWriter(stringaOut);
+                            out = new PrintWriter(buffer, true);
+                            out.println(inMessage);
+                        }
+
+                    }
+
                 }
             }
 
@@ -73,8 +112,6 @@ public class Session implements Runnable {
             this.currentSocket.close();
         } catch (IOException ex) {
             System.out.println(ex);
-            // chiusura di stream e socket
-            System.out.println("EchoServer: chiudo...");
         }
 
     }
@@ -83,6 +120,7 @@ public class Session implements Runnable {
         for (int i = 0; i < this.otherSessions.size(); i++) {
             if (this.otherSessions.get(i).user.getIp().equals(this.user.getIp())) {
                 this.otherSessions.remove(this);
+                System.out.println("Disconnected!");
             }
         }
     }
