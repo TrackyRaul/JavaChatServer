@@ -63,10 +63,6 @@ public class Session implements Runnable {
                     //System.out.println("Command message " + inCommand);
                     String commandType = inCommand.split(" ")[0];
                     if (commandType.equals("/quit")) {
-                        stringaOut = new OutputStreamWriter(this.currentSocket.getOutputStream());
-                        buffer = new BufferedWriter(stringaOut);
-                        out = new PrintWriter(buffer, true);
-                        out.write("Command: /quit");
                         closeMyself();
 
                         break;
@@ -91,7 +87,6 @@ public class Session implements Runnable {
                     // Send messages
 
                     String inMessage = inStr.substring(8).trim();
-                    System.out.println("Arrivato al ciclo!");
                     for (Session s: this.otherSessions){
                         System.out.println(s.user.getUsername());
                         if(s.user.getUsername().equals(this.dest)){
@@ -107,7 +102,6 @@ public class Session implements Runnable {
             }
 
             // chiusura di stream e socket
-            System.out.println("EchoServer: chiudo...");
             inBuffer.close();
             this.currentSocket.close();
         } catch (IOException ex) {
