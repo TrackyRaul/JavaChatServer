@@ -25,9 +25,17 @@ public class Session implements Runnable {
             BufferedWriter buffer;
             PrintWriter out;
 
+            OutputStreamWriter selfStringOut = new OutputStreamWriter(this.currentSocket.getOutputStream());
+            BufferedWriter selfBuffer = new BufferedWriter(selfStringOut);
+            PrintWriter selfOut = new PrintWriter(selfBuffer, true);
+
+
             // Manage recieved string
             while (true) {
                 // Get string from buffer
+                /* Warning/error message structure
+                    1. "Server:error:{error message}"
+                */
                 String inStr = inBuffer.readLine();
                 System.out.println(inStr);
 
@@ -42,6 +50,7 @@ public class Session implements Runnable {
                     }
                     else {
                         // Skip if type not defined
+                        selfOut.println("Server:error:The sent string does not contain a valid type!");
                         continue;
                     }
 
@@ -57,6 +66,7 @@ public class Session implements Runnable {
                             System.out.println(this.user.getUsername());
                         }
                         else {
+                            selfOut.println("Server:error:Sent head is not valid");
                             continue;
                         }
                     }
@@ -70,43 +80,63 @@ public class Session implements Runnable {
                             if (commandType.equals("/quit")) {
                                 closeMyself();
                                 break;
-                            }else if (commandType.equals("/dest")){
+                            } else if (commandType.equals("/dest")) {
                                 // Command: /dest type,name
                                 // Change destination
+                                if (inCommand.length() <= 6){
+                                    selfOut.println("Server:error:Command dest not used correctly!");
+                                    continue;
+                                }
                                 String param = inCommand.substring(6).trim();
 
                                 String[] paramLs = param.split(",");
-                                if(paramLs.length == 2){
-                                    if(paramLs[0].trim().equals("user")){
+                                if (paramLs.length == 2) {
+                                    if (paramLs[0].trim().equals("user")) {
                                         this.dest = paramLs[1].trim();
                                         System.out.println(this.dest);
                                     }
-                                }else{
-                                    System.out.println("Error, command dest not used correctly");
+                                } else {
+                                    selfOut.println("Server:error:Command dest not used correctly!");
                                     continue;
                                 }
-                            }
-                        }
-                        else if (type.equals("Message")) {
-                            // Send messages
-                            if (this.dest.equals("") || this.dest == null){
+                            } else {
+                                selfOut.println("Server:error:Command not recognized!");
                                 continue;
                             }
-                            String inMessage = inStr.substring(8).trim();
-                            // For each session
-                            for (Session s: this.otherSessions){
-                                // Get username anche check if it matches with the dest string
-                                if(s.user.getUsername().equals(this.dest)){
-                                    stringaOut = new OutputStreamWriter(s.currentSocket.getOutputStream());
-                                    buffer = new BufferedWriter(stringaOut);
-                                    out = new PrintWriter(buffer, true);
+                        } else {
+                            selfOut.println("Server:error:Command string not valid!");
+                            continue;
+                        }
+                    }
+                    else if (type.equals("Message")) {
+                        // Send messages
+                        if (this.dest != null) {
+                            if (this.dest.trim().equals("") ) {
+                                selfOut.println("Server:error:Message destination not set!");
+                                continue;
+                            }
+                        } else {
+                            selfOut.println("Server:error:Message destination not set!");
+                            continue;
+                        }
+                        String inMessage = inStr.substring(8).trim();
+                        // For each session
+                        for (Session s : this.otherSessions) {
+                            // Get username anche check if it matches with the dest string
+                            if (s.user.getUsername().equals(this.dest)) {
+                                stringaOut = new OutputStreamWriter(s.currentSocket.getOutputStream());
+                                buffer = new BufferedWriter(stringaOut);
+                                out = new PrintWriter(buffer, true);
 
-                                    // Message structure for users: "User:{Name}:{Message}"
-                                    out.println("User:" + s.user.getUsername() + ":" + inMessage);
-                                }
+                                // Message structure for users: "User:{Name}:{Message}"
+                                out.println("User:" + s.user.getUsername() + ":" + inMessage);
                             }
                         }
                     }
+                } else {
+                    // Error structure 1
+                    selfOut.println("Server:error:The string sent to the server does not follow allowed structure!");
+                    continue;
                 }
             }
 
