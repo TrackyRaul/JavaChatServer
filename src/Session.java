@@ -8,6 +8,7 @@ public class Session implements Runnable {
     private User user;
     private String dest;
     private String destType = "single";
+    private boolean authenticated;
 
     public Session(Socket currentSocket, ArrayList<Session> otherSessions) {
         this.currentSocket = currentSocket;
@@ -30,6 +31,10 @@ public class Session implements Runnable {
             BufferedWriter selfBuffer = new BufferedWriter(selfStringOut);
             PrintWriter selfOut = new PrintWriter(selfBuffer, true);
 
+
+            stringaOut = null;
+            buffer = null;
+            out = null;
 
             // Manage recieved string
             while (true) {
@@ -77,6 +82,21 @@ public class Session implements Runnable {
                                 this.user.setUsername(inHeadDescription[0].trim());
                                 selfOut.println("Head: OK");
                                 System.out.println(this.user.getUsername());
+
+                                // Update users
+                                String updatedUsers = String.join(",", getUsers());
+
+                                // Warn all users that a new user connected
+                                for (int i = 0; i < this.otherSessions.size(); i++) {
+                                    try {
+                                        stringaOut = new OutputStreamWriter(this.otherSessions.get(i).currentSocket.getOutputStream());
+                                        buffer = new BufferedWriter(stringaOut);
+                                        out = new PrintWriter(buffer, true);
+                                        out.println("Server:updateUsers:" + updatedUsers);
+                                    } catch (IOException e) {
+                                        e.printStackTrace();
+                                    }
+                                }
                             }
                             else {
                                 continue;
@@ -203,7 +223,11 @@ public class Session implements Runnable {
             this.currentSocket.close();
         } catch (IOException ex) {
             System.out.println(ex);
+            String[] updatedUsers = getUsers();
             closeMyself();
+
+
+
         }
 
     }
@@ -212,9 +236,36 @@ public class Session implements Runnable {
         for (int i = 0; i < this.otherSessions.size(); i++) {
             if (this.otherSessions.get(i).user.getIp().equals(this.user.getIp())) {
                 this.otherSessions.remove(this);
+
+                /*
+                    On disconnect send message to warn users that an user disconnected
+                    Update users structure
+                    Server:updateUser:{users}
+                */
+                String updatedUsersString  = String.join(",", getUsers());
+                for (int j = 0; j < this.otherSessions.size(); j++) {
+                    OutputStreamWriter stringaOut = null;
+                    try {
+                        stringaOut = new OutputStreamWriter(this.otherSessions.get(j).currentSocket.getOutputStream());
+                        BufferedWriter buffer = new BufferedWriter(stringaOut);
+                        PrintWriter out = new PrintWriter(buffer, true);
+                        out.println("Server:updateUsers:" + updatedUsersString);
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
                 System.out.println("Disconnected!");
             }
         }
+    }
+
+    synchronized public String[] getUsers() {
+        String[] userList = new String[this.otherSessions.size()];
+        for (int i = 0; i < this.otherSessions.size(); i++) {
+            userList[i] = this.otherSessions.get(i).user.getUsername();
+        }
+
+        return userList;
     }
 
     public Socket getCurrentSocket() {
