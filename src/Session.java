@@ -1,4 +1,5 @@
 import java.io.*;
+import java.lang.reflect.Array;
 import java.net.Socket;
 import java.util.ArrayList;
 
@@ -223,7 +224,6 @@ public class Session implements Runnable {
             this.currentSocket.close();
         } catch (IOException ex) {
             System.out.println(ex);
-            String[] updatedUsers = getUsers();
             closeMyself();
 
 
@@ -259,10 +259,12 @@ public class Session implements Runnable {
         }
     }
 
-    synchronized public String[] getUsers() {
-        String[] userList = new String[this.otherSessions.size()];
+    synchronized public ArrayList<String> getUsers() {
+        ArrayList<String> userList = new ArrayList<String>();
         for (int i = 0; i < this.otherSessions.size(); i++) {
-            userList[i] = this.otherSessions.get(i).user.getUsername();
+            if(!this.otherSessions.get(i).getUser().getUsername().equals("Guest")) {
+                userList.add(this.otherSessions.get(i).user.getUsername());
+            }
         }
 
         return userList;
